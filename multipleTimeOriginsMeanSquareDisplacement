@@ -1,12 +1,12 @@
 #! /usr/bin/env python
-#calculates the diffusivity of group from a lammps simulation and plots the mean-squared displacement
+#calculates the diffusivity of group from a lammps simulation using multiple time origins
 import matplotlib.pyplot as plt
 import matplotlib
 import math as m
 import glob
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 
-#variables
+#variables (may not need this anymore using time origins)
 thermoFrequency = 100
 timeStep = 0.5 #fs
 averageRange = 100 #how many points in each average
@@ -20,10 +20,14 @@ trash = infile.readline()
 trash = infile.readline()
 lines = infile.readlines() #read all data lines
 infile.close()
-yt = []
+
+#create empty arrays to hold data
+yt = [] #total, can be used for isotropic systems
 yx = []
 yy = []
-yz = []
+yz =[]
+
+#split the data out into 
 j = 0
 for line in lines: #lines are timestep and number of values, x, y, z, total, so we only want every fifth line
     if j == 0:
@@ -85,6 +89,7 @@ for item in range(len(x)):
 fx.close()
 
 
+#rewrite the following section to plot and 
 
 # print('Number of data points: {0}\n'.format(len(y))) #if adjusting domain for noisy data, do not use more than this number of lines
 # plt.plot(x,yt,'k')
