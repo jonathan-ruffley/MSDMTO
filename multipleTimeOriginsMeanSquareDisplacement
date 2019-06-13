@@ -1,0 +1,122 @@
+#! /usr/bin/env python
+#calculates the diffusivity of group from a lammps simulation and plots the mean-squared displacement
+import matplotlib.pyplot as plt
+import matplotlib
+import math as m
+import glob
+matplotlib.rcParams['mathtext.fontset'] = 'stix'
+
+#variables
+thermoFrequency = 100
+timeStep = 0.5 #fs
+averageRange = 100 #how many points in each average
+averageSeparation = 100 #N steps apart
+
+#read data
+filename = glob.glob('./msd')[0]
+infile = open(filename,'r')
+trash = infile.readline() #header lines do not contain data we need
+trash = infile.readline()
+trash = infile.readline()
+lines = infile.readlines() #read all data lines
+infile.close()
+yt = []
+yx = []
+yy = []
+yz = []
+j = 0
+for line in lines: #lines are timestep and number of values, x, y, z, total, so we only want every fifth line
+    if j == 0:
+        j = j+1
+    elif j == 1:
+        yx.append(float(line.split()[1]))
+        j = j + 1
+    elif j == 2:
+        yy.append(float(line.split()[1]))
+        j = j + 1
+    elif j == 3:
+        yz.append(float(line.split()[1]))
+        j = j + 1
+    elif j == 4:
+        yt.append(float(line.split()[1]))
+        j = 0
+preX = range(0,len(yt))
+x = [i*thermoFrequency*timeStep for i in preX] #multiply by thermo print frequency and timestep to create list of simulation time
+# Identify the total number of points and store in variable Npts
+Npts = len(yt)
+print Npts
+# We need the number of points divided by 2:
+NptsBy2 = Npts/2
+print NptsBy2
+# Specify the number of points to skip (time between time origins) Adjust this as necessary
+Skip = 1000
+# Compute the number of time origins
+Nto = NptsBy2/Skip
+print Nto
+# Print these out to make sure they make sense
+rx = []
+ry = []
+rz = []
+for i in range(0,NptsBy2):
+    rx.append(yx[i])
+   # print rx
+    ry.append(yy[i])
+   # print ry
+    rz.append(yz[i])
+   # print rz
+    for j in range(0,Nto):
+        rx[i] = rx[i]+yx[i+(j+1)*Skip]-yx[(j+1)*Skip]
+       # print rx[i]
+        ry[i] = ry[i]+yy[i+(j+1)*Skip]-yy[(j+1)*Skip]
+       # print ry[i]
+	rz[i] = rz[i]+yz[i+(j+1)*Skip]-yz[(j+1)*Skip]
+        #print rz[i]
+    rx[i]/(Nto+1)
+    ry[i]/(Nto+1)
+    rz[i]/(Nto+1)
+#print rx
+#print ry
+#print rz
+
+#print the x, y, z and total data into files for Karl
+fx = open('Allmsdmto.dat','w')
+for item in range(len(x)):
+    fx.write('{0} {1} {2} {3}\n'.format(x[item],yx[item],yy[item],yz[item]))
+fx.close()
+
+
+
+# print('Number of data points: {0}\n'.format(len(y))) #if adjusting domain for noisy data, do not use more than this number of lines
+# plt.plot(x,yt,'k')
+# plt.ticklabel_format(style="sci",axis="y",scilimits=(0,0)) #use scientific notation on vertical abscissa
+# plt.xlabel('Production time (fs)')
+# plt.ylabel(r'MSD ($\AA^{2}$)')
+# plt.title('MSD')
+# plt.draw()
+#the plot will be saved in the current directory if the following line is uncommented
+#plt.savefig('./MoleculeMsd.png',dpi=200) #for publication quality resolution, change dpi to 600
+#calculate the diffusivity via the slope of the MSD. Equation is D = <|r_i(t) - r_i(0)|^2>/(6*t), where t is the time, for 3D systems
+
+#time origin
+# finalPointsx = []
+# finalPointsxY = []
+# finalPointsyY = []
+# finalPointszY = []
+# numberOfBlocks = m.floor(len(y)/2)
+# itemsPerBlock = numberOfBlocks
+# for blockNumber in range(0, numberOfBlocks):
+#     for j,item in enumerate(range(0,itemsPerBlock)): #enumerate so we have a counter to get the first one.
+#         if j = 0:
+#             xStart = x[blockNumber]
+#             yStart = y[blockNumber]
+#         finalPointsX.append(x[item*blockNumber]-xStart)
+#         finalPointsY.append(y[item*blockNumber]-yStart)
+
+# #other method
+# averageEnd = sum(y[-averageRange:-1])/averageRange #take the mean of the last N MSD values
+# averageNotEnd = sum(y[-1-averageRange-averageSeparation:-1-averageSeparation])/averageRange#take the mean of N MSD values 
+# #denominator of slope is distance between points*output frequency*timestep.
+# slope = (averageEnd-averageNotEnd)/(averageSeparation*thermoFrequency*timeStep)/6*m.pow(10,-5) #pow is a conversion factor from angstrom^2/fs to m^2/s
+# print('Diffusivity: {0} m^2/s'.format(slope))
+# plt.show()
+# plt.close()
